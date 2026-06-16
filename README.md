@@ -1,16 +1,48 @@
-# React + Vite
+# ⚽ Mondial 2026 — World Cup Prediction App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A Hebrew-language World Cup 2026 prediction app built with React + Vite + Supabase + Tailwind CSS, deployed on Netlify.
 
-Currently, two official plugins are available:
+🔗 **Live:** [pgmondial2026.netlify.app](https://pgmondial2026.netlify.app)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Architecture
 
-## React Compiler
+![Architecture](docs/architecture.svg)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Features
 
-## Expanding the ESLint configuration
+- 📋 Predict outcomes (1/X/2) for all 104 World Cup matches
+- 🎯 Exact score predictions for +3 bonus points
+- 🏆 Real-time leaderboard with point calculations
+- 🔄 Live scores from worldcup26.ir API
+- ⚙️ Admin panel for manual result management
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Scoring
+
+| Result | Points |
+|--------|--------|
+| Correct outcome (1/X/2) | +1 |
+| Exact score match | +3 bonus |
+| **Total max per match** | **4** |
+
+## Tech Stack
+
+- **Frontend:** React 19 + Vite + Tailwind CSS
+- **Database:** Supabase (PostgreSQL)
+- **Scores API:** worldcup26.ir
+- **Hosting:** Netlify
+
+## Setup
+
+```bash
+npm install
+```
+
+Create `.env`:
+```
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_anon_key
+```
+
+```bash
+npm run dev
+```
