@@ -1,20 +1,48 @@
-# ⚽ World Cup 2026 - Score Prediction App
+# ⚽ Mondial 2026 — World Cup Prediction App
 
-A web app where you predict World Cup match scores, earn points for correct predictions, and compete on a leaderboard.
+A Hebrew-language World Cup 2026 prediction app built with React + Vite + Supabase + Tailwind CSS, deployed on Netlify.
 
-🌐 **[Play Now](https://pgmondial2026.netlify.app/)**
+🔗 **Live:** [pgmondial2026.netlify.app](https://pgmondial2026.netlify.app)
 
-## 📱 Features
+## Architecture
 
-- **Matches** - Predict upcoming game scores
-- **Leaderboard** - See your ranking vs other players
-- **Stats** - Track your prediction accuracy
-- **Admin** - Update actual match results
+![Architecture](docs/architecture.svg)
 
-## 🔧 Tech Stack
+## Features
 
-React + Vite + Tailwind CSS + Supabase
+- 📋 Predict outcomes (1/X/2) for all 104 World Cup matches
+- 🎯 Exact score predictions for +3 bonus points
+- 🏆 Real-time leaderboard with point calculations
+- 🔄 Live scores from worldcup26.ir API
+- ⚙️ Admin panel for manual result management
 
-## 📖 Setup & Deployment
+## Scoring
 
-See [Getting Started Guide](https://github.com/PashaGend/WorldCup2026/wiki) for installation instructions.
+| Result | Points |
+|--------|--------|
+| Correct outcome (1/X/2) | +1 |
+| Exact score match | +3 bonus |
+| **Total max per match** | **4** |
+
+## Tech Stack
+
+- **Frontend:** React 19 + Vite + Tailwind CSS
+- **Database:** Supabase (PostgreSQL)
+- **Scores API:** worldcup26.ir
+- **Hosting:** Netlify
+
+## Setup
+
+```bash
+npm install
+```
+
+Create `.env`:
+```
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_anon_key
+```
+
+```bash
+npm run dev
+```
