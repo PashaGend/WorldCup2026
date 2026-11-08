@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { MATCHES, TEAM_EN_TO_HE } from '../lib/matches'
+import { MATCHES, getExactScoreBonus } from '../lib/matches'
 
 export default function LeaderboardPage({ user }) {
   const [scores, setScores] = useState([])
@@ -11,33 +11,22 @@ export default function LeaderboardPage({ user }) {
   async function loadScores() {
     setLoading(true)
     try {
-      const [{ data: users }, { data: predictions }, { data: results }, { data: scorePreds }, apiScores] = await Promise.all([
+      const [{ data: users }, { data: predictions }, { data: results }, { data: scorePreds }] = await Promise.all([
         supabase.from('users').select('id, nickname'),
         supabase.from('predictions').select('*'),
         supabase.from('results').select('*'),
         supabase.from('score_predictions').select('*'),
-        fetch('https://worldcup26.ir/get/games').then(r => r.ok ? r.json() : { games: [] }).catch(() => ({ games: [] })),
       ])
 
-      const rmap = {}; results?.forEach(r => { rmap[r.match_id] = r.result })
+      const rmap = {}
+      const scoreMap = {}
+      const stageMap = {}
+      MATCHES.forEach(m => { stageMap[m.id] = m.stage })
+      results?.forEach(r => {
+        rmap[r.match_id] = r.result
+        if (r.home_score != null) scoreMap[r.match_id] = { home: r.home_score, away: r.away_score }
+      })
 
-      // Build live score map from API
-      const liveScores = {}
-      for (const g of apiScores.games || []) {
-        if (g.finished !== 'TRUE') continue
-        const homeHe = TEAM_EN_TO_HE[g.home_team_name_en]
-        const awayHe = TEAM_EN_TO_HE[g.away_team_name_en]
-        if (!homeHe || !awayHe) continue
-        let match = MATCHES.find(m => m.home === homeHe && m.away === awayHe)
-        if (match) {
-          liveScores[match.id] = { home: parseInt(g.home_score), away: parseInt(g.away_score) }
-        } else {
-          match = MATCHES.find(m => m.home === awayHe && m.away === homeHe)
-          if (match) liveScores[match.id] = { home: parseInt(g.away_score), away: parseInt(g.home_score) }
-        }
-      }
-
-      // Build score predictions map: user_id -> match_id -> { home, away }
       const spmap = {}
       scorePreds?.forEach(sp => {
         if (!spmap[sp.user_id]) spmap[sp.user_id] = {}
@@ -47,14 +36,14 @@ export default function LeaderboardPage({ user }) {
       const umap = {}; users?.forEach(u => { umap[u.id] = { nickname: u.nickname, points: 0, total: 0 } })
       predictions?.forEach(p => {
         if (!umap[p.user_id]) return
-        const sc = liveScores[p.match_id]
-        const result = rmap[p.match_id] || (sc ? (sc.home > sc.away ? 'home' : sc.home < sc.away ? 'away' : 'draw') : null)
+        const result = rmap[p.match_id]
         if (!result) return
         umap[p.user_id].total++
         if (p.prediction !== result) return
         let pts = 1
+        const sc = scoreMap[p.match_id]
         const sp = spmap[p.user_id]?.[p.match_id]
-        if (sc && sp && sp.home === sc.home && sp.away === sc.away) pts += 3
+        if (sc && sp && sp.home === sc.home && sp.away === sc.away) pts += getExactScoreBonus(stageMap[p.match_id])
         umap[p.user_id].points += pts
       })
       setScores(Object.values(umap).sort((a, b) => b.points - a.points || b.total - a.total))

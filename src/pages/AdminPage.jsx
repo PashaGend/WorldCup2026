@@ -9,9 +9,9 @@ function isBeforeMatch(dateStr) {
 
 const STAGE_ORDER = ['בתים', 'שלב 32', 'שמינית גמר', 'רבע גמר', 'חצי גמר', 'גמר 3-4', 'גמר']
 
-export default function AdminPage() {
+export default function AdminPage({ user }) {
   const [password, setPassword] = useState('')
-  const [authed, setAuthed] = useState(false)
+  const [authed, setAuthed] = useState(user?.nickname === 'פאשה')
   const [results, setResults] = useState({})
   const [teamNames, setTeamNames] = useState({}) // matchId -> { home, away }
   const [saving, setSaving] = useState(null)
@@ -36,13 +36,14 @@ export default function AdminPage() {
     setTeamNames(nmap)
   }
 
-  async function setResult(matchId, result) {
+  async function setResult(matchId, result, homeScore, awayScore) {
     setSaving(matchId)
     try {
+      const payload = { result, ...(homeScore != null ? { home_score: homeScore, away_score: awayScore } : {}) }
       if (results[matchId]) {
-        await supabase.from('results').update({ result }).eq('match_id', matchId)
+        await supabase.from('results').update(payload).eq('match_id', matchId)
       } else {
-        await supabase.from('results').insert({ match_id: matchId, result })
+        await supabase.from('results').insert({ match_id: matchId, ...payload })
       }
       setResults(prev => ({ ...prev, [matchId]: result }))
     } catch { alert('שגיאה') }
@@ -70,7 +71,11 @@ export default function AdminPage() {
       const res = await fetch('https://worldcup26.ir/get/games')
       if (!res.ok) throw new Error('HTTP ' + res.status)
       const data = await res.json()
-      let updated = 0
+      // Fetch current results fresh from DB to avoid race with loadData
+      const { data: existingResults } = await supabase.from('results').select('match_id')
+      const existingIds = new Set((existingResults || []).map(r => r.match_id))
+
+      const toInsert = []
       for (const g of data.games || []) {
         if (g.finished !== 'TRUE') continue
         const homeHe = TEAM_EN_TO_HE[g.home_team_name_en]
@@ -82,13 +87,17 @@ export default function AdminPage() {
           match = MATCHES.find(m => m.home === awayHe && m.away === homeHe)
           if (match) { [h, a] = [a, h] }
         }
-        if (!match) continue
+        if (!match || existingIds.has(match.id)) continue
         const outcome = h > a ? 'home' : h < a ? 'away' : 'draw'
-        if (results[match.id] === outcome) continue
-        await setResult(match.id, outcome)
-        updated++
+        toInsert.push({ match_id: match.id, result: outcome, home_score: h, away_score: a })
       }
-      setSyncMsg(updated > 0 ? `✅ עודכנו ${updated} משחקים` : '✅ הכל עדכני')
+      if (toInsert.length > 0) {
+        await supabase.from('results').insert(toInsert)
+        const newResults = { ...results }
+        toInsert.forEach(r => { newResults[r.match_id] = r.result })
+        setResults(newResults)
+      }
+      setSyncMsg(toInsert.length > 0 ? `✅ עודכנו ${toInsert.length} משחקים` : '✅ הכל עדכני')
     } catch (e) {
       setSyncMsg('⚠️ שגיאה: ' + e.message)
     } finally { setSyncing(false) }
@@ -159,9 +168,13 @@ export default function AdminPage() {
             const awayName = names?.away || match.away
             const isKnockout = match.stage && match.stage !== 'בתים'
 
+            const hasResult = !!results[match.id]
             return (
               <div key={match.id} className="rounded-2xl p-4 shadow"
-                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                style={{
+                  background: hasResult ? 'rgba(16,185,129,0.08)' : 'rgba(255,255,255,0.05)',
+                  border: hasResult ? '1px solid rgba(16,185,129,0.35)' : '1px solid rgba(255,255,255,0.08)'
+                }}>
                 {/* Team names - editable in knockout */}
                 <div className="flex items-center justify-center gap-2 mb-3">
                   {match.home && !match.home.startsWith('ש') && !match.home.startsWith('ר') && !match.home.startsWith('ח') && !match.home.startsWith('ק') && !match.home.startsWith('מ') && !match.home.startsWith('1') && !match.home.startsWith('3') ? (

@@ -43,7 +43,7 @@ export default function App() {
         {tab === 'matches' && <MatchesPage user={user} />}
         {tab === 'leaderboard' && <LeaderboardPage user={user} />}
         {tab === 'stats' && <StatsPage user={user} />}
-        {tab === 'admin' && <AdminPage />}
+        {tab === 'admin' && <AdminPage user={user} />}
       </div>
 
       <Navbar tab={tab} setTab={setTab} />

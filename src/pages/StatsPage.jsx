@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { MATCHES } from '../lib/matches'
+import { MATCHES, getExactScoreBonus } from '../lib/matches'
 import { FlagImg } from '../components/FlagImg'
 
 const PICK_LABEL = { home: '1', draw: 'X', away: '2' }
@@ -13,7 +13,9 @@ const PICK_NAME = {
 export default function StatsPage({ user }) {
   const [users, setUsers] = useState([])
   const [allPredictions, setAllPredictions] = useState([])
+  const [allScorePreds, setAllScorePreds] = useState([])
   const [results, setResults] = useState({})
+  const [liveScores, setLiveScores] = useState({})
   const [selected, setSelected] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -21,20 +23,32 @@ export default function StatsPage({ user }) {
 
   async function loadData() {
     setLoading(true)
-    const [usersRes, predRes, resultRes] = await Promise.all([
-      supabase.from('users').select('id, nickname'),
-      supabase.from('predictions').select('*'),
-      supabase.from('results').select('*'),
-    ])
-    const usersList = usersRes.data || []
-    setUsers(usersList)
-    setAllPredictions(predRes.data || [])
-    const rmap = {}
-    resultRes.data?.forEach(r => { rmap[r.match_id] = r.result })
-    setResults(rmap)
-    const me = usersList.find(u => u.nickname === user.nickname)
-    if (me) setSelected(me)
-    setLoading(false)
+    try {
+      const [usersRes, predRes, resultRes, scoreRes] = await Promise.all([
+        supabase.from('users').select('id, nickname'),
+        supabase.from('predictions').select('*'),
+        supabase.from('results').select('*'),
+        supabase.from('score_predictions').select('*'),
+      ])
+      const usersList = usersRes.data || []
+      setUsers(usersList)
+      setAllPredictions(predRes.data || [])
+      setAllScorePreds(scoreRes.data || [])
+      const rmap = {}
+      const smap = {}
+      resultRes.data?.forEach(r => {
+        rmap[r.match_id] = r.result
+        if (r.home_score != null) smap[r.match_id] = { home: r.home_score, away: r.away_score }
+      })
+      setResults(rmap)
+      setLiveScores(smap)
+      const me = usersList.find(u => u.nickname === user.nickname)
+      if (me) setSelected(me)
+    } catch (e) {
+      console.error('StatsPage loadData error:', e)
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (loading) return (
@@ -46,12 +60,18 @@ export default function StatsPage({ user }) {
   function getUserStats(userId) {
     const userPreds = {}
     allPredictions.filter(p => p.user_id === userId).forEach(p => { userPreds[p.match_id] = p.prediction })
+    const userScorePreds = {}
+    allScorePreds.filter(p => p.user_id === userId).forEach(p => { userScorePreds[p.match_id] = { home: p.home_score, away: p.away_score } })
     return MATCHES.map(m => {
       const pick = userPreds[m.id]
       const res = results[m.id]
       const played = !!res
       const status = !played ? 'future' : !pick ? 'missed' : pick === res ? 'correct' : 'wrong'
-      return { match: m, pick, result: res, played, status }
+      const scorePick = userScorePreds[m.id] || null
+      const liveScore = liveScores[m.id] || null
+      const scoreBonus = status === 'correct' && scorePick && liveScore &&
+        scorePick.home === liveScore.home && scorePick.away === liveScore.away
+      return { match: m, pick, result: res, played, status, scorePick, liveScore, scoreBonus }
     })
   }
 
@@ -62,6 +82,7 @@ export default function StatsPage({ user }) {
   const missed = played.filter(s => s.status === 'missed').length
   const future = stats.filter(s => s.status === 'future')
   const predicted = future.filter(s => s.pick)
+  const exactScores = played.filter(s => s.scoreBonus).length
 
   return (
     <div className="pb-24 min-h-screen" dir="rtl" style={{ background: '#14532d' }}>
@@ -86,20 +107,28 @@ export default function StatsPage({ user }) {
         <>
           {/* Summary */}
           {played.length > 0 && (
-            <div className="mx-3 mb-3 grid grid-cols-3 gap-2">
-              <div className="rounded-2xl p-3 text-center bg-white shadow">
-                <p className="text-green-700 text-2xl font-black">{correct}</p>
-                <p className="text-gray-500 text-xs mt-0.5">✅ נכון</p>
+            <>
+              <div className="mx-3 mb-2 grid grid-cols-3 gap-2">
+                <div className="rounded-2xl p-3 text-center bg-white shadow">
+                  <p className="text-green-700 text-2xl font-black">{correct}</p>
+                  <p className="text-gray-500 text-xs mt-0.5">✅ נכון</p>
+                </div>
+                <div className="rounded-2xl p-3 text-center bg-white shadow">
+                  <p className="text-red-500 text-2xl font-black">{wrong}</p>
+                  <p className="text-gray-500 text-xs mt-0.5">❌ טעות</p>
+                </div>
+                <div className="rounded-2xl p-3 text-center bg-white shadow">
+                  <p className="text-gray-400 text-2xl font-black">{missed}</p>
+                  <p className="text-gray-500 text-xs mt-0.5">⬜ לא ניחש</p>
+                </div>
               </div>
-              <div className="rounded-2xl p-3 text-center bg-white shadow">
-                <p className="text-red-500 text-2xl font-black">{wrong}</p>
-                <p className="text-gray-500 text-xs mt-0.5">❌ טעות</p>
+              <div className="mx-3 mb-3">
+                <div className="rounded-2xl p-3 text-center shadow" style={{ background: '#dcfce7' }}>
+                  <p className="text-2xl font-black" style={{ color: '#15803d' }}>{exactScores}</p>
+                  <p className="text-xs mt-0.5" style={{ color: '#166534' }}>🎯 תוצאות מדויקות</p>
+                </div>
               </div>
-              <div className="rounded-2xl p-3 text-center bg-white shadow">
-                <p className="text-gray-400 text-2xl font-black">{missed}</p>
-                <p className="text-gray-500 text-xs mt-0.5">⬜ לא ניחש</p>
-              </div>
-            </div>
+            </>
           )}
 
           {/* Played matches */}
@@ -107,7 +136,7 @@ export default function StatsPage({ user }) {
             <div className="px-3 mb-4">
               <p className="text-green-200 text-xs font-bold mb-2 px-1">משחקים שהסתיימו</p>
               <div className="space-y-2">
-                {played.map(({ match, pick, result: res, status }) => (
+                {played.map(({ match, pick, result: res, status, scorePick, liveScore, scoreBonus }) => (
                   <div key={match.id} className={`bg-white rounded-2xl px-4 py-3 shadow border-r-4 ${
                     status === 'correct' ? 'border-green-500' :
                     status === 'wrong' ? 'border-red-400' :
@@ -136,6 +165,22 @@ export default function StatsPage({ user }) {
                         תוצאה:{' '}
                         <span className="font-bold text-gray-800">{PICK_LABEL[res]} ({PICK_NAME[res](match)})</span>
                       </span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs text-gray-500">
+                        ניחוש ציון:{' '}
+                        {scorePick ? (
+                          <span className="font-bold text-gray-800">{scorePick.away}:{scorePick.home}</span>
+                        ) : (
+                          <span className="text-gray-300">לא ניחש תוצאה</span>
+                        )}
+                        {scorePick && liveScore && !scoreBonus && (
+                          <span className="text-gray-400 mr-1"> (בפועל: {liveScore.away}:{liveScore.home})</span>
+                        )}
+                      </span>
+                      {scoreBonus && (
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: '#dcfce7', color: '#15803d' }}>+{getExactScoreBonus(match.stage)} בונוס</span>
+                      )}
                     </div>
                   </div>
                 ))}

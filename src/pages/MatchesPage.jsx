@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { MATCHES, TEAM_EN_TO_HE } from '../lib/matches'
+import { MATCHES, TEAM_EN_TO_HE, getExactScoreBonus } from '../lib/matches'
 import { FlagImg } from '../components/FlagImg'
 
 function isBeforeMatch(d) { return new Date() < new Date(d) }
@@ -58,6 +58,7 @@ function MatchCard({ match, savedPick, savedScore, result, score, onSave }) {
   const missed = result && !savedPick
   const isCorrectScore = result && score && savedScore
     && savedScore.home === score.home && savedScore.away === score.away
+  const scoreBonus = getExactScoreBonus(match.stage)
 
   async function handleSave() {
     if (!localPick || saving) return
@@ -83,7 +84,7 @@ function MatchCard({ match, savedPick, savedScore, result, score, onSave }) {
         <span className="text-xs text-emerald-600 font-medium">{match.stage ? match.stage : `בית ${match.group}`} · {formatTime(match.date)}</span>
         <div className="flex items-center gap-1.5">
           {isCorrect && !isCorrectScore && <span className="text-xs bg-yellow-400 text-yellow-900 font-black px-2.5 py-0.5 rounded-full">✓ 1 נק'</span>}
-          {isCorrectScore && <span className="text-xs bg-emerald-400 text-emerald-900 font-black px-2.5 py-0.5 rounded-full">🎯 4 נק'!</span>}
+          {isCorrectScore && <span className="text-xs bg-emerald-400 text-emerald-900 font-black px-2.5 py-0.5 rounded-full">🎯 {1 + scoreBonus} נק'!</span>}
           {isWrong && <span className="text-xs bg-red-900/60 text-red-300 font-semibold px-2.5 py-0.5 rounded-full border border-red-800/50">✗ טעות</span>}
           {missed && <span className="text-xs bg-gray-800 text-gray-500 px-2.5 py-0.5 rounded-full">לא ניחשת</span>}
           {!result && savedPick && !isDirty && <span className="text-xs text-emerald-500 font-medium">✓ שמור</span>}
@@ -169,7 +170,7 @@ function MatchCard({ match, savedPick, savedScore, result, score, onSave }) {
           <div className="rounded-2xl px-4 py-3" dir="rtl"
             style={{ background: 'rgba(251,191,36,0.07)', border: '1.5px dashed rgba(251,191,36,0.35)' }}>
             <p className="text-center text-xs font-bold mb-2.5" style={{ color: '#fbbf24' }}>
-              🎯 תוצאה מדויקת — בונוס +3 נק' <span className="font-normal opacity-70">(אופציונלי)</span>
+              🎯 תוצאה מדויקת — בונוס +{scoreBonus} נק' <span className="font-normal opacity-70">(אופציונלי)</span>
             </p>
             <div className="flex items-center justify-center gap-3" dir="rtl">
               <div className="flex flex-col items-center gap-1">
@@ -210,7 +211,8 @@ export default function MatchesPage({ user }) {
   const [predictions, setPredictions] = useState({})
   const [scorePreds, setScorePreds] = useState({}) // matchId -> { home, away }
   const [results, setResults] = useState({})
-  const [scores, setScores] = useState({}) // live API scores
+  const [dbScores, setDbScores] = useState({}) // scores from DB (for points calc)
+  const [scores, setScores] = useState({}) // live API scores (for display only)
 
   useEffect(() => { loadData() }, [user.id])
   useEffect(() => { loadLiveScores() }, [])
@@ -245,7 +247,15 @@ export default function MatchesPage({ user }) {
       supabase.from('score_predictions').select('*').eq('user_id', user.id),
     ])
     if (p.data) { const m = {}; p.data.forEach(x => { m[x.match_id] = x.prediction }); setPredictions(m) }
-    if (r.data) { const m = {}; r.data.forEach(x => { m[x.match_id] = x.result }); setResults(m) }
+    if (r.data) {
+      const rm = {}, sm = {}
+      r.data.forEach(x => {
+        rm[x.match_id] = x.result
+        if (x.home_score != null) sm[x.match_id] = { home: x.home_score, away: x.away_score }
+      })
+      setResults(rm)
+      setDbScores(sm)
+    }
     if (sp.data) { const m = {}; sp.data.forEach(x => { m[x.match_id] = { home: x.home_score, away: x.away_score } }); setScorePreds(m) }
   }
 
@@ -275,12 +285,15 @@ export default function MatchesPage({ user }) {
 
   const myPoints = Object.entries(predictions).reduce((acc, [id, outcome]) => {
     const matchId = parseInt(id)
-    const sc = scores[matchId]
-    const result = results[id] || (sc ? (sc.home > sc.away ? 'home' : sc.home < sc.away ? 'away' : 'draw') : null)
+    const result = results[id]
     if (!result || outcome !== result) return acc
     let pts = 1
+    const sc = dbScores[matchId]
     const sp = scorePreds[matchId]
-    if (sc && sp && sp.home === sc.home && sp.away === sc.away) pts += 3
+    if (sc && sp && sp.home === sc.home && sp.away === sc.away) {
+      const match = MATCHES.find(m => m.id === matchId)
+      pts += getExactScoreBonus(match?.stage)
+    }
     return acc + pts
   }, 0)
 

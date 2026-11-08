@@ -1,3 +1,9 @@
+// Exact-score bonus points, by knockout stage (default applies to group stage, 32 האחרונות)
+const EXACT_SCORE_BONUS_BY_STAGE = { 'שמינית גמר': 5, 'רבע גמר': 10, 'מקום 3': 12, 'חצי גמר': 15, 'גמר': 20 }
+export function getExactScoreBonus(stage) {
+  return EXACT_SCORE_BONUS_BY_STAGE[stage] || 3
+}
+
 // Parse prediction stored as "outcome" or "outcome:homeScore:awayScore"
 export function parsePrediction(p) {
   if (!p) return { outcome: null, homeScore: null, awayScore: null }
@@ -141,46 +147,46 @@ export const MATCHES = [
   { id: 72, home: 'קרואטיה', away: 'גאנה',    date: '2026-06-28T00:00', group: '12' },
 
   // ── 32 האחרונות ──
-  { id: 73,  home: 'ממתין',            away: 'ממתין',              date: '2026-06-29T16:30', group: '', stage: '32 האחרונות' },
-  { id: 76,  home: 'מקום 1 בית ג',    away: 'מקום 2 בית ו',       date: '2026-06-29T20:00', group: '', stage: '32 האחרונות' },
-  { id: 74,  home: 'מקום 1 בית ה',    away: '3 בית א/ב/ג/ד/ו',    date: '2026-06-29T23:30', group: '', stage: '32 האחרונות' },
-  { id: 75,  home: 'מקום 1 בית ו',    away: 'מקום 2 בית ג',        date: '2026-06-30T04:00', group: '', stage: '32 האחרונות' },
-  { id: 78,  home: 'מקום 2 בית ה',    away: 'מקום 2 בית ט',        date: '2026-06-30T20:00', group: '', stage: '32 האחרונות' },
-  { id: 77,  home: 'מקום 1 בית ט',    away: '3 בית ג/ד/ו/ז/ח',    date: '2026-07-01T00:00', group: '', stage: '32 האחרונות' },
-  { id: 79,  home: 'מקום 1 בית א',    away: '3 בית ג/ה/ו/ח/ט',    date: '2026-07-01T04:00', group: '', stage: '32 האחרונות' },
-  { id: 80,  home: 'מקום 1 בית י"ב',  away: '3 בית ה/ח/ט/י/י"א',  date: '2026-07-01T19:00', group: '', stage: '32 האחרונות' },
-  { id: 82,  home: 'מקום 1 בית ח',    away: '3 בית א/ה/ח/ט/י',    date: '2026-07-01T23:00', group: '', stage: '32 האחרונות' },
-  { id: 81,  home: 'מקום 1 בית ד',    away: '3 בית ב/ה/ו/ט/י',    date: '2026-07-02T03:00', group: '', stage: '32 האחרונות' },
-  { id: 84,  home: 'מקום 1 בית י',    away: 'מקום 2 בית ח',        date: '2026-07-02T22:00', group: '', stage: '32 האחרונות' },
-  { id: 83,  home: 'מקום 2 בית י"א',  away: 'מקום 2 בית י"ב',     date: '2026-07-03T02:00', group: '', stage: '32 האחרונות' },
-  { id: 85,  home: 'מקום 1 בית ב',    away: '3 בית ה/ו/ז/ט/י',    date: '2026-07-03T06:00', group: '', stage: '32 האחרונות' },
-  { id: 88,  home: 'מקום 2 בית ד',    away: 'מקום 2 בית ז',        date: '2026-07-03T21:00', group: '', stage: '32 האחרונות' },
-  { id: 86,  home: 'מקום 1 בית י',    away: 'מקום 2 בית ח',        date: '2026-07-04T01:00', group: '', stage: '32 האחרונות' },
-  { id: 87,  home: 'מקום 1 בית י"א',  away: '3 בית ד/ה/ט/י/י"ב',  date: '2026-07-04T04:30', group: '', stage: '32 האחרונות' },
+  { id: 73,  home: 'דרום אפריקה',  away: 'קנדה',       date: '2026-06-28T22:00', group: '', stage: '32 האחרונות' },
+  { id: 76,  home: 'ברזיל',         away: 'יפן',         date: '2026-06-29T20:00', group: '', stage: '32 האחרונות' },
+  { id: 74,  home: 'גרמניה',        away: 'פרגוואי',    date: '2026-06-29T23:30', group: '', stage: '32 האחרונות' },
+  { id: 75,  home: 'הולנד',         away: 'מרוקו',       date: '2026-06-30T04:00', group: '', stage: '32 האחרונות' },
+  { id: 78,  home: 'חוף השנהב',     away: 'נורווגיה',   date: '2026-06-30T20:00', group: '', stage: '32 האחרונות' },
+  { id: 77,  home: 'צרפת',          away: 'שוודיה',      date: '2026-07-01T00:00', group: '', stage: '32 האחרונות' },
+  { id: 79,  home: 'מקסיקו',        away: 'אקוודור',    date: '2026-07-01T04:00', group: '', stage: '32 האחרונות' },
+  { id: 80,  home: 'אנגליה',        away: 'קונגו DR',   date: '2026-07-01T19:00', group: '', stage: '32 האחרונות' },
+  { id: 82,  home: 'בלגיה',         away: 'סנגל',        date: '2026-07-01T23:00', group: '', stage: '32 האחרונות' },
+  { id: 81,  home: 'ארצות הברית',  away: 'בוסניה',      date: '2026-07-02T03:00', group: '', stage: '32 האחרונות' },
+  { id: 84,  home: 'ספרד',          away: 'אוסטריה',    date: '2026-07-02T22:00', group: '', stage: '32 האחרונות' },
+  { id: 83,  home: 'פורטוגל',       away: 'קרואטיה',    date: '2026-07-03T02:00', group: '', stage: '32 האחרונות' },
+  { id: 85,  home: 'שווייץ',        away: "אלג'יריה",    date: '2026-07-03T06:00', group: '', stage: '32 האחרונות' },
+  { id: 88,  home: 'אוסטרליה',      away: 'מצרים',       date: '2026-07-03T21:00', group: '', stage: '32 האחרונות' },
+  { id: 86,  home: 'ארגנטינה',      away: 'כף ורדה',    date: '2026-07-04T01:00', group: '', stage: '32 האחרונות' },
+  { id: 87,  home: 'קולומביה',      away: 'גאנה',        date: '2026-07-04T04:30', group: '', stage: '32 האחרונות' },
 
   // ── שמינית גמר ──
-  { id: 89,  home: 'מנצחת 74',  away: 'מנצחת 77',  date: '2026-07-05T00:00', group: '', stage: 'שמינית גמר' },
-  { id: 90,  home: 'מנצחת 73',  away: 'מנצחת 75',  date: '2026-07-05T20:00', group: '', stage: 'שמינית גמר' },
-  { id: 91,  home: 'מנצחת 76',  away: 'מנצחת 78',  date: '2026-07-05T23:00', group: '', stage: 'שמינית גמר' },
-  { id: 92,  home: 'מנצחת 79',  away: 'מנצחת 80',  date: '2026-07-06T03:00', group: '', stage: 'שמינית גמר' },
-  { id: 93,  home: 'מנצחת 83',  away: 'מנצחת 84',  date: '2026-07-06T22:00', group: '', stage: 'שמינית גמר' },
-  { id: 94,  home: 'מנצחת 81',  away: 'מנצחת 82',  date: '2026-07-07T03:00', group: '', stage: 'שמינית גמר' },
-  { id: 95,  home: 'מנצחת 86',  away: 'מנצחת 88',  date: '2026-07-07T19:00', group: '', stage: 'שמינית גמר' },
-  { id: 96,  home: 'מנצחת 85',  away: 'מנצחת 87',  date: '2026-07-07T23:00', group: '', stage: 'שמינית גמר' },
+  { id: 89,  home: 'פרגוואי',        away: 'צרפת',       date: '2026-07-05T00:00', group: '', stage: 'שמינית גמר' },
+  { id: 90,  home: 'קנדה',           away: 'מרוקו',      date: '2026-07-04T20:00', group: '', stage: 'שמינית גמר' },
+  { id: 91,  home: 'ברזיל',          away: 'נורווגיה',   date: '2026-07-05T23:00', group: '', stage: 'שמינית גמר' },
+  { id: 92,  home: 'מקסיקו',         away: 'אנגליה',     date: '2026-07-06T03:00', group: '', stage: 'שמינית גמר' },
+  { id: 93,  home: 'פורטוגל',        away: 'ספרד',        date: '2026-07-06T22:00', group: '', stage: 'שמינית גמר' },
+  { id: 94,  home: 'ארצות הברית',   away: 'בלגיה',       date: '2026-07-07T03:00', group: '', stage: 'שמינית גמר' },
+  { id: 95,  home: 'ארגנטינה',       away: 'מצרים',       date: '2026-07-07T19:00', group: '', stage: 'שמינית גמר' },
+  { id: 96,  home: 'שווייץ',         away: 'קולומביה',    date: '2026-07-07T23:00', group: '', stage: 'שמינית גמר' },
 
   // ── רבע גמר ──
-  { id: 97,  home: 'מנצחת 89',  away: 'מנצחת 90',  date: '2026-07-09T23:00', group: '', stage: 'רבע גמר' },
-  { id: 98,  home: 'מנצחת 93',  away: 'מנצחת 94',  date: '2026-07-10T22:00', group: '', stage: 'רבע גמר' },
-  { id: 99,  home: 'מנצחת 91',  away: 'מנצחת 92',  date: '2026-07-11T00:00', group: '', stage: 'רבע גמר' },
-  { id: 100, home: 'מנצחת 95',  away: 'מנצחת 96',  date: '2026-07-11T04:00', group: '', stage: 'רבע גמר' },
+  { id: 97,  home: 'צרפת',      away: 'מרוקו',   date: '2026-07-09T23:00', group: '', stage: 'רבע גמר' },
+  { id: 98,  home: 'ספרד',      away: 'בלגיה',    date: '2026-07-10T22:00', group: '', stage: 'רבע גמר' },
+  { id: 99,  home: 'נורווגיה',  away: 'אנגליה',   date: '2026-07-12T00:00', group: '', stage: 'רבע גמר' },
+  { id: 100, home: 'ארגנטינה', away: 'שווייץ',    date: '2026-07-12T04:00', group: '', stage: 'רבע גמר' },
 
   // ── חצי גמר ──
-  { id: 101, home: 'מנצחת 97',  away: 'מנצחת 98',  date: '2026-07-14T22:00', group: '', stage: 'חצי גמר' },
-  { id: 102, home: 'מנצחת 100', away: 'מנצחת 99',  date: '2026-07-15T22:00', group: '', stage: 'חצי גמר' },
+  { id: 101, home: 'צרפת',    away: 'ספרד',      date: '2026-07-14T22:00', group: '', stage: 'חצי גמר' },
+  { id: 102, home: 'אנגליה',  away: 'ארגנטינה',  date: '2026-07-15T22:00', group: '', stage: 'חצי גמר' },
 
   // ── מקום 3 וגמר ──
-  { id: 103, home: 'מפסידת 101', away: 'מפסידת 102', date: '2026-07-19T00:00', group: '', stage: 'מקום 3' },
-  { id: 104, home: 'מנצחת 101',  away: 'מנצחת 102',  date: '2026-07-19T22:00', group: '', stage: 'גמר' },
+  { id: 103, home: 'צרפת', away: 'אנגליה',    date: '2026-07-19T00:00', group: '', stage: 'מקום 3' },
+  { id: 104, home: 'ספרד', away: 'ארגנטינה',  date: '2026-07-19T22:00', group: '', stage: 'גמר' },
 ]
 
 export const ADMIN_PASSWORD = '0548009108'
