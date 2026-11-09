@@ -55,7 +55,7 @@ export default function LoginPage({ onLogin }) {
 
           {step === 'phone' ? (
             <form onSubmit={handlePhone} dir="rtl">
-              <label className="block text-emerald-300 text-sm font-medium mb-3">מספר טלפון</label>
+              <label className="block text-emerald-300 text-sm font-medium mb-3">הזן מספר טלפון</label>
               <input type="tel" value={phone} onChange={e => setPhone(e.target.value)}
                 placeholder="0501234567"
                 className="w-full rounded-2xl px-4 py-4 text-center text-xl font-bold mb-2 focus:outline-none transition-all"
