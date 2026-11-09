@@ -20,6 +20,10 @@ jobs:
           repository: PashaGend/mundial-qa-automation
           path: mundial-qa-automation
 
+      - name: Clean up any leftover containers (defensive, normally a no-op)
+        working-directory: mundial-qa-automation
+        run: docker compose --env-file .env.docker down --remove-orphans || true
+
       - name: Start db, rest, gateway, web
         working-directory: mundial-qa-automation
         run: docker compose --env-file .env.docker up -d --build db rest gateway web
